@@ -10,8 +10,8 @@ upward.
                  └──────┬───────────────┬───────────────┬─────┘
                         │               │               │
                  ┌──────▼───────────────▼───────────────▼─────┐
-  services       │ tak-state   tak-transport   tak-storage    │  (phase 2+)
-  (planned)      │ tak-crypto  tak-missions    tak-plugins    │
+  services       │ tak-state   tak-transport   tak-storage*   │  *planned
+                 │ tak-crypto  tak-missions*   tak-plugins*   │
                  └──────┬──────────────┬─────────────────┬────┘
                         │              │                 │
                  ┌──────▼──────┐ ┌─────▼──────┐  ┌───────▼─────┐
@@ -70,7 +70,7 @@ The send path is the mirror image: `from_tak_event` → `to_xml` →
 `StreamEncoder` → socket. Unknown detail nodes picked up on receive are
 re-emitted on send, so TAK-RS can relay traffic it does not understand.
 
-## Crate responsibilities (phase 1)
+## Crate responsibilities
 
 ### `tak-core`
 * Strong value types: `TakUid`, `Callsign`, `Latitude`/`Longitude`/`GeoPoint`,
@@ -110,13 +110,58 @@ re-emitted on send, so TAK-RS can relay traffic it does not understand.
 * `tak cot validate [--strict]` (exit 1 on failure; strict adds domain mapping
   and lossless round trip).
 
+### `tak-proto`
+* Hand-written `prost::Message` structs for TAK Protocol v1 (`TakMessage`,
+  `TakControl`, `CotEvent`, `Detail` + typed details); no `protoc` (ADR 0007).
+  Reference `.proto` files live in `crates/tak-proto/proto/`.
+* `to_proto` / `from_proto` between `tak_cot::CotEvent` and `TakMessage`.
+  Typed details that are fully representable are hoisted into protobuf
+  fields; everything else (unknown elements, extra attributes, text) travels
+  losslessly in `Detail.xmlDetail` as a root-less XML fragment.
+* `encode` / `decode` of a single message; stream framing stays in
+  `tak-network`.
+
+### `tak-crypto`
+* `ClientIdentity` from PEM (`cert`+`key`) or PKCS#12 (`user.p12`), keys in
+  `Zeroizing` buffers, `Debug` redacted.
+* `TrustStore` from PEM bundles, PKCS#12 trust stores or `webpki-roots`.
+* `build_client_config` → `Arc<rustls::ClientConfig>` with explicit
+  `Verification::{Full, TrustedChainAnyName, DangerousNoVerify}`.
+* `inspect_pem` / `inspect_der` → `CertInfo` (subject, issuer, validity, SANs,
+  SHA-256 fingerprint); never includes key material.
+
+### `tak-transport`
+* `TlsConnector`: TCP + `tokio-rustls` handshake → `StreamTransport<TlsStream>`;
+  implements `tak_network::Connector` so callers do not care about TLS vs TCP.
+* `Negotiator`: pure state machine for TAK Protocol negotiation
+  (`t-x-takp-v` → `t-x-takp-q` → `t-x-takp-r`); falls back to XML on decline,
+  can be pinned to XML.
+* `Session`: one connection; drives negotiation, encodes outbound events in
+  the negotiated `WireMode`, decodes inbound frames, counts errors instead of
+  dropping the connection on one bad frame.
+* `Supervisor`: owns the reconnect loop (exponential backoff with equal jitter (`[d/2, d]`),
+  `CancellationToken` shutdown), emits `SupervisorEvent`s
+  (`Connected`/`WireMode`/`Received`/`Disconnected`/`Stopped`) and takes
+  outbound events on a channel. One supervisor per server connection.
+
+### `tak-state`
+* `Store`: contacts, objects and chat keyed by UID; `apply(TakEvent)` returns
+  the `StoreChange`s it caused so UIs/agents update incrementally.
+* No clock of its own: `sweep(now)` removes items past `stale` + grace.
+  Capacity limits, chat de-duplication by `message_id`, counters in
+  `StoreStats`.
+* Depends only on `tak-core` — no XML, protobuf, sockets or async runtime.
+
+### `tak-cli` (phase 2 additions)
+* `tak connect` streams events (summary / JSON-lines / XML), optional `--send`.
+* `tak contacts`, `tak status` observe a server for N seconds and report.
+* `tak cert inspect` for PEM and PKCS#12 (`--password`, `TAK_P12_PASSWORD`).
+
 ## Planned crates (see ROADMAP.md)
 
-`tak-proto` (prost, hand-written TAK Protocol messages), `tak-crypto`
-(PEM/PKCS#12, rustls client config, cert inspection), `tak-transport`
-(TLS, TAK Protocol negotiation, reconnect supervisor, UDP mesh),
-`tak-state`, `tak-storage` (SQLite), `tak-missions` (data packages, mission
-API), `tak-plugins` (WASM component sandbox), `tak-ui-core`, `tak-map`.
+`tak-storage` (SQLite persistence and replay), UDP mesh SA in
+`tak-transport`, `tak-missions` (data packages, mission API), `tak-plugins`
+(WASM component sandbox), `tak-ui-core`, `tak-map`.
 
 ## Concurrency model
 

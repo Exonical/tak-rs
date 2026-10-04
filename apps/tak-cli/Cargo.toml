@@ -16,6 +16,13 @@ path = "src/main.rs"
 tak-core = { workspace = true, features = ["serde"] }
 tak-cot = { workspace = true }
 tak-network = { workspace = true }
+tak-crypto = { workspace = true }
+tak-transport = { workspace = true }
+tak-state = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal", "time", "sync"] }
+tokio-util = { workspace = true }
+zeroize = { workspace = true }
+time = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 serde_json = { workspace = true }
@@ -28,3 +35,5 @@ workspace = true
 
 [dev-dependencies]
 serde_json = { workspace = true }
+rcgen = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }

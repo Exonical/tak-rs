@@ -1,0 +1,23 @@
+[package]
+name = "tak-proto"
+description = "TAK Protocol (protobuf) messages and adapters, without a protoc build dependency"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+tak-core = { workspace = true }
+tak-cot = { workspace = true }
+prost = { workspace = true }
+bytes = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tak-core = { workspace = true }
+
+[lints]
+workspace = true

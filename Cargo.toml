@@ -4,6 +4,10 @@ members = [
     "crates/tak-core",
     "crates/tak-cot",
     "crates/tak-network",
+    "crates/tak-proto",
+    "crates/tak-crypto",
+    "crates/tak-transport",
+    "crates/tak-state",
     "apps/tak-cli",
 ]
 # Fuzz targets are built separately with `cargo fuzz` (see CONTRIBUTING.md).
@@ -23,6 +27,10 @@ homepage = "https://github.com/Exonical/tak-rs"
 tak-core = { path = "crates/tak-core", version = "0.1.0" }
 tak-cot = { path = "crates/tak-cot", version = "0.1.0" }
 tak-network = { path = "crates/tak-network", version = "0.1.0" }
+tak-proto = { path = "crates/tak-proto", version = "0.1.0" }
+tak-crypto = { path = "crates/tak-crypto", version = "0.1.0" }
+tak-transport = { path = "crates/tak-transport", version = "0.1.0" }
+tak-state = { path = "crates/tak-state", version = "0.1.0" }
 
 # Runtime / async
 tokio = { version = "1.47", default-features = false }
@@ -32,6 +40,18 @@ bytes = "1.10"
 # Serialization / wire formats
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+prost = "0.14"
+rustls = { version = "0.23", default-features = false, features = ["ring", "tls12", "logging", "std"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
+rustls-pki-types = { version = "1", features = ["std"] }
+webpki-roots = "1"
+p12-keystore = "0.3"
+x509-parser = "0.18"
+zeroize = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+tokio-util = "0.7"
+rand = "0.9"
+rcgen = "0.14"
 quick-xml = "0.42"
 
 # Domain primitives

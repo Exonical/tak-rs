@@ -1,11 +1,13 @@
 //! `tak` — the TAK-RS command-line tool.
 //!
-//! Phase 1 ships the CoT codec commands (`tak cot decode|encode|validate`).
-//! Connectivity commands (`tak connect`, `tak contacts`, …) arrive with
-//! `tak-transport` / `tak-state`.
+//! * `tak cot decode|encode|validate` — CoT XML codec utilities.
+//! * `tak connect|contacts|status` — live TAK Server sessions (TCP or mTLS).
+//! * `tak cert inspect` — certificate / PKCS#12 inspection.
 
 #![allow(clippy::doc_markdown)]
 
+mod cert;
+mod connect;
 mod cot;
 
 use std::process::ExitCode;
@@ -29,6 +31,15 @@ enum Command {
     /// Cursor-on-Target XML utilities.
     #[command(subcommand)]
     Cot(cot::CotCommand),
+    /// Connect to a TAK server and stream events to stdout.
+    Connect(Box<connect::ConnectArgs>),
+    /// Connect, listen for a while, and list the contacts seen.
+    Contacts(Box<connect::ContactsArgs>),
+    /// Connect and report negotiated protocol and traffic counters.
+    Status(Box<connect::StatusArgs>),
+    /// Certificate and PKCS#12 utilities.
+    #[command(subcommand)]
+    Cert(cert::CertCommand),
 }
 
 fn main() -> ExitCode {
@@ -36,6 +47,10 @@ fn main() -> ExitCode {
     init_logging(&cli.log);
     let result = match cli.command {
         Command::Cot(cmd) => cot::run(cmd),
+        Command::Connect(args) => connect::run_connect(*args),
+        Command::Contacts(args) => connect::run_contacts(*args),
+        Command::Status(args) => connect::run_status(*args),
+        Command::Cert(cmd) => cert::run(cmd),
     };
     match result {
         Ok(code) => code,

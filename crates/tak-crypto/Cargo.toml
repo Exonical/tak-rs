@@ -1,0 +1,29 @@
+[package]
+name = "tak-crypto"
+description = "TLS identity and trust handling for TAK: PEM/PKCS#12 loading, rustls client config, certificate inspection"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+rustls = { workspace = true }
+rustls-pki-types = { workspace = true }
+webpki-roots = { workspace = true }
+p12-keystore = { workspace = true }
+x509-parser = { workspace = true }
+zeroize = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+time = { workspace = true }
+
+[dev-dependencies]
+rcgen = { workspace = true }
+p12-keystore = { workspace = true }
+time = { workspace = true }
+
+[lints]
+workspace = true

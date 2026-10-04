@@ -74,6 +74,33 @@ pub fn parse_with_limits(xml: &str, limits: &ParseLimits) -> Result<CotEvent, Co
     parser.document()
 }
 
+/// Parse a `<detail>` *fragment*: zero or more sibling elements with no
+/// enclosing root, as carried in TAK Protocol's `Detail.xmlDetail`.
+pub fn parse_detail_fragment(xml: &str) -> Result<Vec<DetailNode>, CotError> {
+    parse_detail_fragment_with_limits(xml, &ParseLimits::DEFAULT)
+}
+
+/// [`parse_detail_fragment`] with explicit limits.
+pub fn parse_detail_fragment_with_limits(
+    xml: &str,
+    limits: &ParseLimits,
+) -> Result<Vec<DetailNode>, CotError> {
+    if xml.len() > limits.max_bytes {
+        return Err(CotError::TooLarge {
+            max: limits.max_bytes,
+            actual: xml.len(),
+        });
+    }
+    let mut reader = Reader::from_str(xml);
+    reader.config_mut().expand_empty_elements = true;
+    let mut parser = Parser {
+        reader,
+        limits,
+        nodes: 0,
+    };
+    parser.fragment()
+}
+
 struct Parser<'a, 'l> {
     reader: Reader<&'a [u8]>,
     limits: &'l ParseLimits,
@@ -109,6 +136,26 @@ impl<'a> Parser<'a, '_> {
                     return Err(CotError::MissingEvent);
                 }
                 Event::Eof => return Err(CotError::MissingEvent),
+            }
+        }
+    }
+
+    fn fragment(&mut self) -> Result<Vec<DetailNode>, CotError> {
+        let mut nodes = Vec::new();
+        loop {
+            match self.next()? {
+                Event::Decl(_) | Event::PI(_) | Event::Comment(_) => {}
+                Event::DocType(_) => return Err(CotError::DoctypeNotAllowed),
+                Event::Text(t) if t.xml10_content().trim().is_empty() => {}
+                Event::Start(start) => nodes.push(self.subtree(&start, 1)?),
+                Event::Text(_)
+                | Event::CData(_)
+                | Event::GeneralRef(_)
+                | Event::Empty(_)
+                | Event::End(_) => {
+                    return Err(CotError::UnexpectedText("detail".into()));
+                }
+                Event::Eof => return Ok(nodes),
             }
         }
     }

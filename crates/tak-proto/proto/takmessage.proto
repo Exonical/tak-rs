@@ -1,0 +1,10 @@
+// TAK Protocol Version 1 — reference schema (field numbers mirrored by src/message.rs).
+syntax = "proto3";
+package atakmap.commoncommo.protobuf.v1;
+import "takcontrol.proto";
+import "cotevent.proto";
+
+message TakMessage {
+  TakControl takControl = 1;
+  CotEvent cotEvent = 2;
+}

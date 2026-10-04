@@ -108,6 +108,15 @@ pub fn to_xml_with(event: &CotEvent, opts: &WriteOptions) -> Result<String, CotE
     String::from_utf8(w.into_inner()).map_err(|e| CotError::Write(e.to_string()))
 }
 
+/// Serialise detail nodes as a root-less XML fragment (TAK Protocol `xmlDetail`).
+pub fn nodes_to_xml(nodes: &[DetailNode]) -> Result<String, CotError> {
+    let mut w = Writer::new(Vec::new());
+    for node in nodes {
+        write_node(&mut w, node)?;
+    }
+    String::from_utf8(w.into_inner()).map_err(|e| CotError::Write(e.to_string()))
+}
+
 /// Serialise a single detail node (useful for debugging and tests).
 pub fn node_to_xml(node: &DetailNode) -> Result<String, CotError> {
     let mut w = Writer::new(Vec::new());
