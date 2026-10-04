@@ -1514,6 +1514,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tak-state"
+version = "0.1.0"
+dependencies = [
+ "tak-core",
+ "tak-cot",
+ "tracing",
+]
+
+[[package]]
 name = "tak-transport"
 version = "0.1.0"
 dependencies = [

@@ -7,6 +7,7 @@ members = [
     "crates/tak-proto",
     "crates/tak-crypto",
     "crates/tak-transport",
+    "crates/tak-state",
     "apps/tak-cli",
 ]
 # Fuzz targets are built separately with `cargo fuzz` (see CONTRIBUTING.md).
@@ -29,6 +30,7 @@ tak-network = { path = "crates/tak-network", version = "0.1.0" }
 tak-proto = { path = "crates/tak-proto", version = "0.1.0" }
 tak-crypto = { path = "crates/tak-crypto", version = "0.1.0" }
 tak-transport = { path = "crates/tak-transport", version = "0.1.0" }
+tak-state = { path = "crates/tak-state", version = "0.1.0" }
 
 # Runtime / async
 tokio = { version = "1.47", default-features = false }
