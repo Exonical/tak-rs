@@ -1,0 +1,82 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/tak-core",
+    "crates/tak-cot",
+    "crates/tak-network",
+    "apps/tak-cli",
+]
+# Fuzz targets are built separately with `cargo fuzz` (see CONTRIBUTING.md).
+exclude = ["crates/tak-cot/fuzz"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Apache-2.0"
+repository = "https://github.com/Exonical/tak-rs"
+authors = ["TAK-RS contributors"]
+homepage = "https://github.com/Exonical/tak-rs"
+
+[workspace.dependencies]
+# Internal crates
+tak-core = { path = "crates/tak-core", version = "0.1.0" }
+tak-cot = { path = "crates/tak-cot", version = "0.1.0" }
+tak-network = { path = "crates/tak-network", version = "0.1.0" }
+
+# Runtime / async
+tokio = { version = "1.47", default-features = false }
+async-trait = "0.1"
+bytes = "1.10"
+
+# Serialization / wire formats
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+quick-xml = "0.42"
+
+# Domain primitives
+time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+uuid = { version = "1.17", features = ["v4"] }
+
+# Errors / diagnostics
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+anyhow = "1.0"
+
+# CLI
+clap = { version = "4.5", features = ["derive", "env"] }
+
+# Test-only
+proptest = "1.7"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Protocol and networking code must not panic on untrusted input.
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+# Pedantic lints that fight idiomatic code in this workspace.
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+return_self_not_must_use = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+struct_excessive_bools = "allow"
+similar_names = "allow"
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_possible_wrap = "allow"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"

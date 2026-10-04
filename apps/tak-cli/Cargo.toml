@@ -1,0 +1,30 @@
+[package]
+name = "tak-cli"
+description = "TAK-RS command-line tool: CoT codec utilities and debugging harness"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "tak"
+path = "src/main.rs"
+
+[dependencies]
+tak-core = { workspace = true, features = ["serde"] }
+tak-cot = { workspace = true }
+tak-network = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+serde_json = { workspace = true }

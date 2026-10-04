@@ -1,0 +1,1 @@
+<event version="2.0" uid="protouid" type="t-x-takp-q" time="2024-05-01T12:09:01.000Z" start="2024-05-01T12:09:01.000Z" stale="2024-05-01T12:10:01.000Z" how="m-g"><point lat="0.0" lon="0.0" hae="0.0" ce="999999" le="999999"/><detail><TakControl><TakRequest version="1"/></TakControl></detail></event>

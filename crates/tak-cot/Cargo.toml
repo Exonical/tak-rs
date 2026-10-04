@@ -1,0 +1,21 @@
+[package]
+name = "tak-cot"
+description = "Cursor-on-Target (CoT) XML codec with lossless detail preservation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+tak-core = { workspace = true }
+quick-xml = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- vendor extension stress test -->
+<event version="2.0" uid="ext-0001" type="a-f-G-U-C" how="m-g" time="2024-05-01T12:12:00.000Z" start="2024-05-01T12:12:00.000Z" stale="2024-05-01T12:18:00.000Z" vendorAttr="kept">
+  <point lat="38.0" lon="-77.0" hae="100.0" ce="1.0" le="2.0"/>
+  <detail>
+    <contact callsign="EXT &amp; CO" endpoint="*:-1:stcp"/>
+    <__group name="Magenta" role="Forward Observer"/>
+    <__group_future name="Chartreuse" role="Drone Pilot"/>
+    <acme:telemetry xmlns:acme="urn:acme" version="3"><![CDATA[raw <payload> & stuff]]></acme:telemetry>
+    <deep><a><b><c><d><e><f><g><h attr="h"/></g></f></e></d></c></b></a></deep>
+    <empty/>
+    <text-only>   spaced   out   </text-only>
+    <entities>&lt;tag&gt; &amp; &quot;quotes&quot; &apos;apos&apos; &#x263A; &#9786;</entities>
+    <unicode name="Ünïcödé 日本語 🙂"/>
+  </detail>
+</event>

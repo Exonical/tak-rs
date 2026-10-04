@@ -1,0 +1,1 @@
+doc-valid-idents = ["..", "CoT", "TAK", "TAK-RS", "GeoChat", "MapLibre", "WinTAK", "iTAK", "ATAK", "ATAK-CIV", "mTLS", "SQLite", "WebSocket", "Dioxus", "Meshtastic", "PKCS", "WGS-84", "MIL-STD-2525", "GeoJSON", "KML", "KMZ", "GPX", "MBTiles", "GeoTIFF", "DTED", "APRS", "ADS-B", "QUIC", "SATCOM", "FreeTAKServer", "OpenSSL"]

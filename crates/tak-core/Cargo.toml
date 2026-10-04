@@ -1,0 +1,26 @@
+[package]
+name = "tak-core"
+description = "Canonical TAK-RS domain model: wire-format independent types for TAK objects, contacts, tracks and events"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+## Enable serde derives for all domain types (used by tak-cli JSON output and tak-storage).
+serde = ["dep:serde", "time/serde-well-known"]
+
+[dependencies]
+thiserror = { workspace = true }
+time = { workspace = true }
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true
