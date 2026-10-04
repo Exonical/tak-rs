@@ -212,6 +212,11 @@ impl Store {
 
     fn upsert_contact(&mut self, contact: Contact) -> Vec<StoreChange> {
         let uid = contact.uid.clone();
+        if !self.contacts.contains_key(&uid) && self.contacts.len() >= self.config.max_contacts {
+            self.stats.rejected += 1;
+            tracing::warn!(%uid, limit = self.config.max_contacts, "contact limit reached; dropping report");
+            return vec![StoreChange::Rejected(uid)];
+        }
         // A UID is either a contact or an object; a contact report supersedes
         // an object with the same UID (and vice versa).
         let mut changes = Vec::new();
@@ -220,12 +225,6 @@ impl Store {
                 uid.clone(),
                 RemovalReason::Evicted,
             ));
-        }
-        if !self.contacts.contains_key(&uid) && self.contacts.len() >= self.config.max_contacts {
-            self.stats.rejected += 1;
-            tracing::warn!(%uid, limit = self.config.max_contacts, "contact limit reached; dropping report");
-            changes.push(StoreChange::Rejected(uid));
-            return changes;
         }
         let change = match self.contacts.insert(uid.clone(), contact) {
             Some(_) => StoreChange::ContactUpdated(uid),
@@ -237,18 +236,17 @@ impl Store {
 
     fn upsert_object(&mut self, object: TakObject) -> Vec<StoreChange> {
         let uid = object.uid.clone();
+        if !self.objects.contains_key(&uid) && self.objects.len() >= self.config.max_objects {
+            self.stats.rejected += 1;
+            tracing::warn!(%uid, limit = self.config.max_objects, "object limit reached; dropping report");
+            return vec![StoreChange::Rejected(uid)];
+        }
         let mut changes = Vec::new();
         if self.contacts.remove(&uid).is_some() {
             changes.push(StoreChange::ContactRemoved(
                 uid.clone(),
                 RemovalReason::Evicted,
             ));
-        }
-        if !self.objects.contains_key(&uid) && self.objects.len() >= self.config.max_objects {
-            self.stats.rejected += 1;
-            tracing::warn!(%uid, limit = self.config.max_objects, "object limit reached; dropping report");
-            changes.push(StoreChange::Rejected(uid));
-            return changes;
         }
         let change = match self.objects.insert(uid.clone(), object) {
             Some(_) => StoreChange::ObjectUpdated(uid),
@@ -270,6 +268,10 @@ impl Store {
     }
 
     fn add_chat(&mut self, message: ChatMessage) -> Vec<StoreChange> {
+        if self.config.max_chat_messages == 0 {
+            self.stats.rejected += 1;
+            return vec![StoreChange::Rejected(message.message_id)];
+        }
         if !self.chat_ids.insert(message.message_id.clone()) {
             self.stats.chat_duplicates += 1;
             return Vec::new();

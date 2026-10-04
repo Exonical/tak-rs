@@ -19,7 +19,7 @@ reusable by `tak-cli`, `tak-agent` and `tak-client`.
   outbound `CotEvent`s in the current `WireMode`, decodes inbound frames and
   counts (rather than fails on) undecodable ones.
 * `Supervisor` wraps a `Connector` and runs the connect → session → backoff
-  loop. Full-jitter exponential backoff resets after a stable connection.
+  loop. Exponential backoff with equal jitter (`[d/2, d]`) resets after a stable connection.
   Shutdown is a `CancellationToken`; it tries a graceful `close()` first.
   Communication with the application is two channels: outbound `CotEvent`s
   in, `SupervisorEvent`s out.

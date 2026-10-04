@@ -17,9 +17,9 @@ use tokio_util::sync::CancellationToken;
 
 use crate::error::TransportError;
 use crate::negotiate::WireMode;
-use crate::session::{Session, SessionStats};
+use crate::session::{Inbound, Session, SessionStats};
 
-/// Exponential backoff with full jitter.
+/// Exponential backoff with equal jitter (`[d/2, d]`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BackoffPolicy {
     /// Delay after the first failure.
@@ -98,15 +98,33 @@ pub struct SupervisorHandle {
 
 impl SupervisorHandle {
     /// Request a graceful stop (closes the live session) and wait for the task.
-    pub async fn shutdown(self) {
+    pub async fn shutdown(mut self) {
         self.cancel.cancel();
-        let _ = self.task.await;
+        let _ = (&mut self.task).await;
     }
 
     /// Token that stops the supervisor when cancelled.
     #[must_use]
     pub fn cancel_token(&self) -> CancellationToken {
         self.cancel.clone()
+    }
+}
+
+impl Drop for SupervisorHandle {
+    fn drop(&mut self) {
+        self.cancel.cancel();
+    }
+}
+
+/// Send an event unless the supervisor is cancelled or nobody listens.
+async fn emit(
+    events: &mpsc::Sender<SupervisorEvent>,
+    cancel: &CancellationToken,
+    event: SupervisorEvent,
+) -> bool {
+    tokio::select! {
+        () = cancel.cancelled() => false,
+        sent = events.send(event) => sent.is_ok(),
     }
 }
 
@@ -179,13 +197,10 @@ async fn run(
                 } else {
                     Session::new(transport, sup.client_uid.clone())
                 };
-                if events
-                    .send(SupervisorEvent::Connected {
-                        transport: session.id().clone(),
-                    })
-                    .await
-                    .is_err()
-                {
+                let connected = SupervisorEvent::Connected {
+                    transport: session.id().clone(),
+                };
+                if !emit(&events, &cancel, connected).await {
                     break;
                 }
                 match drive(session, &mut outbound, &events, &cancel).await {
@@ -203,15 +218,12 @@ async fn run(
         let retry_in = sup.backoff.delay(attempt);
         attempt = attempt.saturating_add(1);
         tracing::warn!(%reason, ?retry_in, "connection lost; reconnecting");
-        if events
-            .send(SupervisorEvent::Disconnected {
-                reason,
-                retry_in,
-                stats,
-            })
-            .await
-            .is_err()
-        {
+        let disconnected = SupervisorEvent::Disconnected {
+            reason,
+            retry_in,
+            stats,
+        };
+        if !emit(&events, &cancel, disconnected).await {
             break;
         }
         tokio::select! {
@@ -219,7 +231,8 @@ async fn run(
             () = tokio::time::sleep(retry_in) => {}
         }
     }
-    let _ = events.send(SupervisorEvent::Stopped).await;
+    // Never block shutdown on a full channel; a dropped `Stopped` is harmless.
+    let _ = events.try_send(SupervisorEvent::Stopped);
 }
 
 enum Driven {
@@ -233,7 +246,6 @@ async fn drive(
     events: &mpsc::Sender<SupervisorEvent>,
     cancel: &CancellationToken,
 ) -> Driven {
-    let mut mode = session.wire_mode();
     loop {
         tokio::select! {
             () = cancel.cancelled() => {
@@ -241,17 +253,16 @@ async fn drive(
                 return Driven::Cancelled;
             }
             inbound = session.recv() => {
-                let result: Result<Option<CotEvent>, TransportError> = inbound;
+                let result: Result<Option<Inbound>, TransportError> = inbound;
                 match result {
-                    Ok(Some(event)) => {
-                        if session.wire_mode() != mode {
-                            mode = session.wire_mode();
-                            if events.send(SupervisorEvent::WireMode(mode)).await.is_err() {
-                                return Driven::Cancelled;
-                            }
+                    Ok(Some(Inbound::WireMode(mode))) => {
+                        if !emit(events, cancel, SupervisorEvent::WireMode(mode)).await {
+                            return Driven::Cancelled;
                         }
-                        let msg = SupervisorEvent::Received { transport: session.id().clone(), event: Box::new(event) };
-                        if events.send(msg).await.is_err() {
+                    }
+                    Ok(Some(Inbound::Event(event))) => {
+                        let msg = SupervisorEvent::Received { transport: session.id().clone(), event };
+                        if !emit(events, cancel, msg).await {
                             return Driven::Cancelled;
                         }
                     }

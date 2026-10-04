@@ -23,6 +23,6 @@ pub mod tls;
 
 pub use error::TransportError;
 pub use negotiate::{Negotiator, NegotiatorOutcome, WireMode};
-pub use session::{Session, SessionStats};
+pub use session::{Inbound, Session, SessionStats};
 pub use supervisor::{BackoffPolicy, Supervisor, SupervisorEvent, SupervisorHandle};
 pub use tls::TlsConnector;

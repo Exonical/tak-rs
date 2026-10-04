@@ -7,6 +7,16 @@ use tak_network::{Frame, Transport};
 use crate::error::TransportError;
 use crate::negotiate::{Negotiator, NegotiatorOutcome, WireMode};
 
+/// Something the peer sent that the application should know about.
+#[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum Inbound {
+    /// An application event.
+    Event(Box<CotEvent>),
+    /// Negotiation finished; subsequent traffic uses this encoding.
+    WireMode(WireMode),
+}
+
 /// Counters for diagnostics (`tak status`).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[non_exhaustive]
@@ -92,9 +102,10 @@ impl Session {
         Ok(())
     }
 
-    /// Receive the next application event, handling negotiation internally.
-    /// `Ok(None)` means the peer closed the connection.
-    pub async fn recv(&mut self) -> Result<Option<CotEvent>, TransportError> {
+    /// Receive the next application event or wire-mode change, handling
+    /// negotiation replies internally. `Ok(None)` means the peer closed the
+    /// connection.
+    pub async fn recv(&mut self) -> Result<Option<Inbound>, TransportError> {
         loop {
             let Some(frame) = self.transport.recv().await? else {
                 return Ok(None);
@@ -102,7 +113,8 @@ impl Session {
             self.stats.frames_in += 1;
             match self.negotiator.on_frame(&frame, Timestamp::now())? {
                 NegotiatorOutcome::PassThrough => {}
-                NegotiatorOutcome::Consumed | NegotiatorOutcome::Switch(_) => continue,
+                NegotiatorOutcome::Consumed => continue,
+                NegotiatorOutcome::Switch(mode) => return Ok(Some(Inbound::WireMode(mode))),
                 NegotiatorOutcome::Reply(reply) => {
                     self.send_frame(reply).await?;
                     continue;
@@ -111,7 +123,7 @@ impl Session {
             match decode(&frame) {
                 Ok(Some(event)) => {
                     self.stats.events_in += 1;
-                    return Ok(Some(event));
+                    return Ok(Some(Inbound::Event(Box::new(event))));
                 }
                 Ok(None) => {}
                 Err(e) => {

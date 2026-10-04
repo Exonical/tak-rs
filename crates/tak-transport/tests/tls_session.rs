@@ -16,7 +16,7 @@ use tak_core::{TakUid, Timestamp, TransportId};
 use tak_crypto::{ClientIdentity, TlsOptions, TrustStore, Verification};
 use tak_network::{Frame, StreamTransport, TcpConnector, Transport as _, TransportConfig};
 use tak_transport::negotiate::{TYPE_REQUEST, TYPE_RESPONSE, TYPE_SUPPORT, control_event};
-use tak_transport::{Session, Supervisor, SupervisorEvent, TlsConnector, WireMode};
+use tak_transport::{Inbound, Session, Supervisor, SupervisorEvent, TlsConnector, WireMode};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 
@@ -112,6 +112,15 @@ fn fast() -> TransportConfig {
     }
 }
 
+/// Next application event, skipping wire-mode notifications.
+async fn next_event(session: &mut Session) -> Option<tak_cot::CotEvent> {
+    loop {
+        if let Inbound::Event(e) = session.recv().await.unwrap()? {
+            return Some(*e);
+        }
+    }
+}
+
 fn server_control(cot_type: &str, element: &str, attrs: &[(&str, &str)]) -> Frame {
     let ev = control_event(
         &TakUid::new("TAK-SERVER").unwrap(),
@@ -202,19 +211,24 @@ async fn mtls_negotiates_protobuf_and_exchanges_events() {
     let mut session = Session::new(transport, TakUid::new("CLIENT-UID").unwrap());
     assert_eq!(session.wire_mode(), WireMode::CotXml);
 
-    let sa = session.recv().await.unwrap().expect("SA event");
+    assert_eq!(
+        session.recv().await.unwrap(),
+        Some(Inbound::WireMode(WireMode::TakProtocolV1)),
+        "mode switch is reported before any traffic"
+    );
+    let sa = next_event(&mut session).await.expect("SA event");
     assert_eq!(sa.uid.as_str(), sa_event().uid.as_str());
     assert_eq!(session.wire_mode(), WireMode::TakProtocolV1);
 
     let mut mine = sa_event();
     mine.uid = TakUid::new("CLIENT-UID").unwrap();
     session.send(&mine).await.unwrap();
-    let echo = session.recv().await.unwrap().expect("echo");
+    let echo = next_event(&mut session).await.expect("echo");
     assert_eq!(echo.uid.as_str(), "CLIENT-UID");
 
-    let after = session.recv().await.unwrap().expect("event after junk");
+    let after = next_event(&mut session).await.expect("event after junk");
     assert_eq!(after.uid.as_str(), "after-junk");
-    assert!(session.recv().await.unwrap().is_none(), "clean close");
+    assert!(next_event(&mut session).await.is_none(), "clean close");
     let stats = session.stats();
     assert_eq!(stats.decode_errors, 1);
     assert_eq!(stats.events_in, 3);

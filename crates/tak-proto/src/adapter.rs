@@ -13,7 +13,7 @@ use tak_cot::detail::{
     ContactDetail, GroupDetail, KnownDetail as _, PrecisionLocationDetail, StatusDetail,
     TakvDetail, TrackDetail,
 };
-use tak_cot::{COT_VERSION, CotEvent, CotPoint, UNKNOWN_SENTINEL, parse_detail_fragment};
+use tak_cot::{COT_VERSION, CotEvent, CotPoint, parse_detail_fragment};
 
 use crate::error::ProtoError;
 use crate::message::{
@@ -81,9 +81,9 @@ pub fn from_proto(message: &TakMessage) -> Result<CotEvent, ProtoError> {
     let point = CotPoint {
         lat: proto.lat,
         lon: proto.lon,
-        hae: or_sentinel(proto.hae),
-        ce: or_sentinel(proto.ce),
-        le: or_sentinel(proto.le),
+        hae: proto.hae,
+        ce: proto.ce,
+        le: proto.le,
     };
     let time = timestamp("time", proto.send_time)?;
     let stale = timestamp("stale", proto.stale_time)?;
@@ -214,12 +214,14 @@ fn detail_from_proto(detail: &Detail) -> Result<Extensions, ProtoError> {
 }
 
 // Hoisting helpers return `None` when the element carries anything the proto
-// field cannot express, so the caller keeps it in `xmlDetail` instead.
+// field cannot express, so the caller keeps it in `xmlDetail` instead. An
+// *empty* attribute value is one such thing: proto3 strings cannot tell
+// `endpoint=""` from a missing attribute.
 
 fn only_attrs(node: &DetailNode, allowed: &[&str]) -> bool {
     node.attributes
         .iter()
-        .all(|(k, _)| allowed.contains(&k.as_str()))
+        .all(|(k, v)| allowed.contains(&k.as_str()) && !v.is_empty())
 }
 
 fn contact_to_proto(node: &DetailNode) -> Option<Contact> {
@@ -295,13 +297,6 @@ fn timestamp(field: &'static str, millis: u64) -> Result<Timestamp, ProtoError> 
 
 fn non_empty(s: &str) -> Option<&str> {
     if s.is_empty() { None } else { Some(s) }
-}
-
-/// Proto3 cannot distinguish "absent" from `0.0`; ATAK sends the CoT
-/// sentinel explicitly, but a zero `hae`/`ce`/`le` from another producer is
-/// treated as "unknown" rather than "sea level / perfect fix".
-fn or_sentinel(v: f64) -> f64 {
-    if v == 0.0 { UNKNOWN_SENTINEL } else { v }
 }
 
 #[cfg(test)]

@@ -126,6 +126,40 @@ fn chat_dedupes_and_caps() {
 }
 
 #[test]
+fn rejected_contact_does_not_evict_object_with_same_uid() {
+    let mut store = Store::new(StoreConfig {
+        max_contacts: 1,
+        ..StoreConfig::default()
+    });
+    store.apply(fixture("atak_sa.xml"));
+    let marker = fixture("marker_hostile.xml");
+    let marker_uid = marker.uid().clone();
+    store.apply(marker);
+    // A contact report for the marker's UID cannot fit; the object must survive.
+    let mut sa = fixture("wintak_sa.xml");
+    if let TakEvent::ContactUpdated(c) = &mut sa {
+        c.uid = marker_uid.clone();
+    }
+    assert_eq!(
+        store.apply(sa),
+        vec![StoreChange::Rejected(marker_uid.clone())]
+    );
+    assert!(store.object(&marker_uid).is_some());
+}
+
+#[test]
+fn zero_chat_capacity_rejects_instead_of_announcing() {
+    let mut store = Store::new(StoreConfig {
+        max_chat_messages: 0,
+        ..StoreConfig::default()
+    });
+    let msg = fixture("geochat_direct.xml");
+    let id = msg.uid().clone();
+    assert_eq!(store.apply(msg), vec![StoreChange::Rejected(id)]);
+    assert_eq!(store.chat().count(), 0);
+}
+
+#[test]
 fn capacity_limit_rejects_new_contacts() {
     let mut store = Store::new(StoreConfig {
         max_contacts: 1,

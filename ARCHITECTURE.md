@@ -139,7 +139,7 @@ re-emitted on send, so TAK-RS can relay traffic it does not understand.
 * `Session`: one connection; drives negotiation, encodes outbound events in
   the negotiated `WireMode`, decodes inbound frames, counts errors instead of
   dropping the connection on one bad frame.
-* `Supervisor`: owns the reconnect loop (full-jitter exponential backoff,
+* `Supervisor`: owns the reconnect loop (exponential backoff with equal jitter (`[d/2, d]`),
   `CancellationToken` shutdown), emits `SupervisorEvent`s
   (`Connected`/`WireMode`/`Received`/`Disconnected`/`Stopped`) and takes
   outbound events on a channel. One supervisor per server connection.

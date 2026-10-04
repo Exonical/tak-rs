@@ -149,18 +149,23 @@ fn transport_config(args: &ServerArgs) -> TransportConfig {
     }
 }
 
+/// Add the default protocol to a bare `host:port` (including `[v6]:port`).
+fn qualify_server(spec: &str, has_identity: bool) -> String {
+    let after_host = if spec.starts_with('[') {
+        spec.rsplit_once(']').map_or(spec, |(_, tail)| tail)
+    } else {
+        spec
+    };
+    if after_host.matches(':').count() == 1 {
+        format!("{spec}:{}", if has_identity { "ssl" } else { "tcp" })
+    } else {
+        spec.to_owned()
+    }
+}
+
 fn parse_server(args: &ServerArgs) -> anyhow::Result<Endpoint> {
     let has_identity = args.cert.is_some() || args.p12.is_some();
-    let spec = if args.server.matches(':').count() == 1 {
-        format!(
-            "{}:{}",
-            args.server,
-            if has_identity { "ssl" } else { "tcp" }
-        )
-    } else {
-        args.server.clone()
-    };
-    Ok(spec.parse::<Endpoint>()?)
+    Ok(qualify_server(&args.server, has_identity).parse::<Endpoint>()?)
 }
 
 fn identity(args: &ServerArgs) -> anyhow::Result<Option<ClientIdentity>> {
@@ -209,7 +214,10 @@ fn connector(args: &ServerArgs) -> anyhow::Result<(Arc<dyn Connector>, String)> 
     match endpoint.protocol {
         Protocol::Tcp => {
             if args.cert.is_some() || args.p12.is_some() {
-                tracing::warn!("certificate given but protocol is tcp; it will not be used");
+                bail!(
+                    "`{}` is plaintext tcp but a client certificate was given; use `:ssl` or drop --cert/--p12",
+                    args.server
+                );
             }
             let c = TcpConnector::new(addr, cfg);
             let d = c.describe();
@@ -519,6 +527,7 @@ fn read_events(path: &PathBuf) -> anyhow::Result<Vec<CotEvent>> {
         std::fs::read(path).with_context(|| format!("reading {}", path.display()))?
     };
     let text = String::from_utf8(bytes).context("--send file is not UTF-8")?;
+    let text = text.trim();
     let mut decoder = tak_network::StreamDecoder::new(text.len().max(1));
     decoder.extend(text.as_bytes());
     let mut events = Vec::new();
@@ -528,8 +537,32 @@ fn read_events(path: &PathBuf) -> anyhow::Result<Vec<CotEvent>> {
             .ok_or_else(|| anyhow::anyhow!("--send only accepts CoT XML"))?;
         events.push(tak_cot::parse(xml)?);
     }
+    if decoder.pending() > 0 {
+        bail!(
+            "--send input ends with an incomplete event ({} trailing bytes)",
+            decoder.pending()
+        );
+    }
     if events.is_empty() {
         bail!("no CoT events in --send input");
     }
     Ok(events)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::qualify_server;
+
+    #[test]
+    fn qualify_adds_default_protocol_only_to_bare_host_port() {
+        assert_eq!(qualify_server("h:8087", false), "h:8087:tcp");
+        assert_eq!(qualify_server("h:8089", true), "h:8089:ssl");
+        assert_eq!(qualify_server("h:8089:ssl", false), "h:8089:ssl");
+        assert_eq!(qualify_server("[::1]:8089", true), "[::1]:8089:ssl");
+        assert_eq!(qualify_server("[::1]:8087:tcp", true), "[::1]:8087:tcp");
+        assert_eq!(
+            qualify_server("[fe80::1%eth0]:8087", false),
+            "[fe80::1%eth0]:8087:tcp"
+        );
+    }
 }
