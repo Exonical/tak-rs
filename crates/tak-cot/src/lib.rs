@@ -2,7 +2,7 @@
 //!
 //! This crate owns everything XML-specific about CoT:
 //!
-//! * [`parse`] turns untrusted CoT XML into a [`CotEvent`], enforcing size,
+//! * [`parse()`] turns untrusted CoT XML into a [`CotEvent`], enforcing size,
 //!   depth and node-count limits and rejecting DTDs and unknown entities.
 //! * [`to_xml`] serialises a [`CotEvent`] back to XML.
 //! * [`detail`] provides typed views over well-known `<detail>` children
