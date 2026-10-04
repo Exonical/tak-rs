@@ -1,5 +1,6 @@
 [package]
 name = "tak-network"
+description = "Transport abstraction, stream framing and TCP transport for TAK traffic"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,7 +10,15 @@ authors.workspace = true
 
 [dependencies]
 tak-core = { workspace = true }
+tokio = { workspace = true, features = ["net", "io-util", "time", "sync"] }
+async-trait = { workspace = true }
+bytes = { workspace = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+proptest = { workspace = true }
 
 [lints]
 workspace = true
