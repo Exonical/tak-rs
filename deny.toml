@@ -18,6 +18,8 @@ allow = [
     "CC0-1.0",
     "MPL-2.0",
     "OpenSSL",
+    # webpki-roots ships Mozilla's root store under the CDLA Permissive data licence.
+    "CDLA-Permissive-2.0",
 ]
 confidence-threshold = 0.9
 
