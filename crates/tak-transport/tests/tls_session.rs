@@ -10,6 +10,7 @@ use std::time::Duration;
 use rcgen::{BasicConstraints, CertificateParams, DnType, IsCa, Issuer, KeyPair, SanType};
 use rustls::server::WebPkiClientVerifier;
 use rustls::{RootCertStore, ServerConfig};
+use rustls_pki_types::pem::PemObject;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use tak_core::{TakUid, Timestamp, TransportId};
 use tak_crypto::{ClientIdentity, TlsOptions, TrustStore, Verification};
@@ -63,7 +64,7 @@ fn pki() -> Pki {
 fn server_config(p: &Pki) -> Arc<ServerConfig> {
     let provider = tak_crypto::crypto_provider();
     let mut roots = RootCertStore::empty();
-    for c in rustls_pemfile::certs(&mut p.ca_pem.as_bytes()) {
+    for c in CertificateDer::pem_slice_iter(p.ca_pem.as_bytes()) {
         roots.add(c.unwrap()).unwrap();
     }
     let verifier = WebPkiClientVerifier::builder_with_provider(Arc::new(roots), provider.clone())

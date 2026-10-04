@@ -4,6 +4,7 @@ use std::fmt;
 use std::path::Path;
 
 use p12_keystore::{KeyStore, Pkcs12ImportPolicy};
+use rustls_pki_types::pem::{self, PemObject};
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use zeroize::Zeroizing;
 
@@ -24,15 +25,16 @@ impl ClientIdentity {
     /// leaf first); `key_pem` holds a PKCS#8, RSA (PKCS#1) or SEC1 key.
     pub fn from_pem(cert_pem: &[u8], key_pem: &[u8]) -> Result<Self, CryptoError> {
         let mut chain = Vec::new();
-        for cert in rustls_pemfile::certs(&mut std::io::Cursor::new(cert_pem)) {
+        for cert in CertificateDer::pem_slice_iter(cert_pem) {
             chain.push(cert.map_err(|e| CryptoError::parse("certificate PEM", e))?);
         }
         if chain.is_empty() {
             return Err(CryptoError::NoCertificate("certificate PEM"));
         }
-        let key = rustls_pemfile::private_key(&mut std::io::Cursor::new(key_pem))
-            .map_err(|e| CryptoError::parse("private key PEM", e))?
-            .ok_or(CryptoError::NoPrivateKey("private key PEM"))?;
+        let key = PrivateKeyDer::from_pem_slice(key_pem).map_err(|e| match e {
+            pem::Error::NoItemsFound => CryptoError::NoPrivateKey("private key PEM"),
+            other => CryptoError::parse("private key PEM", other),
+        })?;
         Self::new(chain, key)
     }
 

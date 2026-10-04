@@ -28,7 +28,6 @@ tracing = { workspace = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rcgen = { workspace = true }
-rustls-pemfile = { workspace = true }
 
 [lints]
 workspace = true

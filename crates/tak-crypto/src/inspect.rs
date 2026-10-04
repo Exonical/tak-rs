@@ -1,5 +1,7 @@
 //! Human-readable certificate summaries (no key material).
 
+use rustls_pki_types::CertificateDer;
+use rustls_pki_types::pem::PemObject;
 use sha2::{Digest as _, Sha256};
 use time::OffsetDateTime;
 use x509_parser::extensions::GeneralName;
@@ -82,9 +84,8 @@ pub fn inspect_der(der: &[u8]) -> Result<CertInfo, CryptoError> {
 
 /// Inspect every certificate in a PEM bundle, in order.
 pub fn inspect_pem(pem: &[u8]) -> Result<Vec<CertInfo>, CryptoError> {
-    let mut reader = std::io::Cursor::new(pem);
     let mut out = Vec::new();
-    for cert in rustls_pemfile::certs(&mut reader) {
+    for cert in CertificateDer::pem_slice_iter(pem) {
         let cert = cert.map_err(|e| CryptoError::parse("certificate PEM", e))?;
         out.push(inspect_der(&cert)?);
     }

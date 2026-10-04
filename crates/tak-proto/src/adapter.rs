@@ -357,7 +357,7 @@ mod tests {
         assert_eq!(back.stale, event.stale);
         assert_eq!(back.point, event.point);
         assert_eq!(canonical(&back.detail), canonical(&event.detail));
-        assert!(lossy_fields(&event).is_empty());
+        assert_eq!(lossy_fields(&event), Vec::<&str>::new());
     }
 
     #[test]

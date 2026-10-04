@@ -44,7 +44,6 @@ prost = "0.14"
 rustls = { version = "0.23", default-features = false, features = ["ring", "tls12", "logging", "std"] }
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
 rustls-pki-types = { version = "1", features = ["std"] }
-rustls-pemfile = "2"
 webpki-roots = "1"
 p12-keystore = "0.3"
 x509-parser = "0.18"

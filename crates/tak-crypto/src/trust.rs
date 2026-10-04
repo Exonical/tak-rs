@@ -5,6 +5,7 @@ use std::path::Path;
 use p12_keystore::{KeyStore, KeyStoreEntry, Pkcs12ImportPolicy};
 use rustls::RootCertStore;
 use rustls_pki_types::CertificateDer;
+use rustls_pki_types::pem::PemObject;
 use zeroize::Zeroizing;
 
 use crate::error::CryptoError;
@@ -56,7 +57,7 @@ impl TrustStore {
     /// Add every certificate in a PEM bundle.
     pub fn add_pem(&mut self, pem: &[u8]) -> Result<&mut Self, CryptoError> {
         let mut added = 0;
-        for cert in rustls_pemfile::certs(&mut std::io::Cursor::new(pem)) {
+        for cert in CertificateDer::pem_slice_iter(pem) {
             let cert = cert.map_err(|e| CryptoError::parse("CA PEM", e))?;
             self.add_der(&cert)?;
             added += 1;
