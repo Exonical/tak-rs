@@ -6,6 +6,7 @@ members = [
     "crates/tak-network",
     "crates/tak-proto",
     "crates/tak-crypto",
+    "crates/tak-transport",
     "apps/tak-cli",
 ]
 # Fuzz targets are built separately with `cargo fuzz` (see CONTRIBUTING.md).
@@ -25,6 +26,9 @@ homepage = "https://github.com/Exonical/tak-rs"
 tak-core = { path = "crates/tak-core", version = "0.1.0" }
 tak-cot = { path = "crates/tak-cot", version = "0.1.0" }
 tak-network = { path = "crates/tak-network", version = "0.1.0" }
+tak-proto = { path = "crates/tak-proto", version = "0.1.0" }
+tak-crypto = { path = "crates/tak-crypto", version = "0.1.0" }
+tak-transport = { path = "crates/tak-transport", version = "0.1.0" }
 
 # Runtime / async
 tokio = { version = "1.47", default-features = false }
@@ -44,6 +48,8 @@ p12-keystore = "0.3"
 x509-parser = "0.18"
 zeroize = { version = "1", features = ["derive"] }
 sha2 = "0.10"
+tokio-util = "0.7"
+rand = "0.9"
 rcgen = "0.14"
 quick-xml = "0.42"
 
