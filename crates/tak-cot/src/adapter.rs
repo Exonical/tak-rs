@@ -929,7 +929,7 @@ mod tests {
         assert_eq!(m.sender_callsign.as_str(), "ALPHA");
         assert_eq!(m.conversation.kind, ConversationKind::Broadcast);
         assert_eq!(m.message_id.as_str(), "msg-1");
-        assert!(m.recipients.is_empty());
+        assert_eq!(m.recipients, Vec::new());
 
         let back = from_chat(&m).unwrap();
         assert_eq!(back.uid.as_str(), "GeoChat.ANDROID-1.All Chat Rooms.msg-1");

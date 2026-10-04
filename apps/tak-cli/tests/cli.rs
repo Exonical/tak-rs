@@ -112,7 +112,7 @@ fn validate_accepts_every_valid_fixture_and_rejects_every_malformed_one() {
         .output()
         .unwrap();
     assert!(out.status.success(), "{}", stderr(&out));
-    assert!(stdout(&out).is_empty());
+    assert_eq!(stdout(&out), "");
 
     for bad in std::fs::read_dir(fixtures().join("malformed")).unwrap() {
         let bad = bad.unwrap().path();
