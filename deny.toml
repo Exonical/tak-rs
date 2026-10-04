@@ -1,0 +1,36 @@
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "CC0-1.0",
+    "MPL-2.0",
+    "OpenSSL",
+]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# FFmpeg is explicitly not a foundational dependency (see DESIGN.md).
+deny = [
+    { crate = "ffmpeg-next" },
+    { crate = "ffmpeg-sys-next" },
+    { crate = "openssl-sys", reason = "TLS is provided by rustls" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
