@@ -13,3 +13,5 @@ record "Superseded by NNNN".
 | 0005 | Offline-first, transport-independent state                   | Accepted |
 | 0006 | Security baseline: rustls only, no unsafe, no panics, fuzzed | Accepted |
 | 0007 | TAK Protocol via prost with hand-written messages (no protoc)| Accepted |
+| 0008 | Session owns negotiation; Supervisor owns reconnection         | Accepted |
+| 0009 | State store is synchronous and clock-free                     | Accepted |

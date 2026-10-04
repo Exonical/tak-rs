@@ -8,7 +8,7 @@ shells on top:
 
 | Application  | Purpose                                                    | Status      |
 |--------------|------------------------------------------------------------|-------------|
-| `tak-cli`    | CLI codec tools and debugging harness                      | Phase 1     |
+| `tak-cli`    | CLI codec tools, server connectivity and debugging harness | Phase 1–2   |
 | `tak-agent`  | Headless Raspberry Pi / vehicle / sensor-gateway node      | planned     |
 | `tak-client` | Dioxus map client for desktop and mobile                   | planned     |
 
@@ -23,8 +23,12 @@ crates/
   tak-core      canonical, wire-neutral domain model (no XML/protobuf/UI types)
   tak-cot       Cursor-on-Target XML codec; unknown <detail> content is preserved
   tak-network   Transport trait, CoT-XML + TAK Protocol stream framing, TCP
+  tak-proto     TAK Protocol v1 (protobuf) via prost, hand-written, no protoc
+  tak-crypto    PEM/PKCS#12 identities, trust stores, rustls mTLS config, cert inspect
+  tak-transport TLS connector, TAK Protocol negotiation, session, reconnect supervisor
+  tak-state     Transport-independent contacts/objects/chat store with change events
 apps/
-  tak-cli       `tak cot decode | encode | validate`
+  tak-cli       `tak cot …`, `tak connect | contacts | status`, `tak cert inspect`
 ```
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) for the layering rules and
@@ -45,6 +49,17 @@ tak cot encode --uid ME --lat 38.9 --lon=-77.0 --callsign ALPHA --team Cyan --ro
 
 # CI-style validation (exit 1 on any failure)
 tak cot validate --strict crates/tak-cot/tests/fixtures/valid/*.xml
+
+# plain TCP (port 8087): stream everything the server relays, as JSON lines
+tak connect --server takserver.example:8087:tcp --format jsonl
+
+# mTLS (port 8089) with the files TAK Server hands out; negotiates TAK Protocol
+export TAK_P12_PASSWORD=atakatak
+tak status   --server takserver.example:8089:ssl --p12 user.p12 --truststore truststore-root.p12
+tak contacts --server 10.0.0.5:8089:ssl --p12 user.p12 --truststore truststore-root.p12 --no-verify-hostname
+
+# what is in that certificate? (never prints key material)
+tak cert inspect user.p12
 ```
 
 ## Development

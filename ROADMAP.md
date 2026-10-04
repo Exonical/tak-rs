@@ -17,20 +17,22 @@ embedded/headless → desktop/mobile UX → minimal platform code.
 
 ## Phase 2 — Milestone 1: talk to a TAK Server
 
-- [ ] `tak-proto`: TAK Protocol v1 `TakMessage`/`CotEvent`/`Detail` with
+- [x] `tak-proto`: TAK Protocol v1 `TakMessage`/`CotEvent`/`Detail` with
       prost (hand-written message structs, no `protoc` build dependency);
       adapters to/from `tak-core`
-- [ ] `tak-crypto`: PEM and PKCS#12 loading, rustls `ClientConfig` with mTLS,
+- [x] `tak-crypto`: PEM and PKCS#12 loading, rustls `ClientConfig` with mTLS,
       trust-store handling, `tak cert inspect`
-- [ ] `tak-transport`: TLS transport (`StreamTransport<TlsStream>`), TAK
+- [x] `tak-transport`: TLS transport (`StreamTransport<TlsStream>`), TAK
       Protocol negotiation state machine, reconnect supervisor with backoff
       and jitter, graceful shutdown
-- [ ] `tak-state`: contacts/objects/chat with stale handling, `TakEvent`
-      fan-in from multiple transports, snapshots for UI
-- [ ] `tak-cli connect | contacts | send | status`
-- [ ] In-process TLS test server covering negotiation, reconnect, mTLS
-- [ ] Acceptance: appears as a contact in ATAK/WinTAK/iTAK; sees them; survives
-      connection loss; unknown detail does not break parsing
+- [x] `tak-state`: contacts/objects/chat with stale handling, `TakEvent`
+      fan-in from multiple transports, change events for UI
+- [x] `tak-cli connect [--send] | contacts | status | cert inspect`
+- [x] In-process TLS test server covering negotiation, reconnect, mTLS
+- [ ] Acceptance against a real TAK Server (needs an endpoint + certs): appears
+      as a contact in ATAK/WinTAK/iTAK; sees them; survives connection loss;
+      unknown detail does not break parsing
+- [ ] Periodic own-position SA from `tak connect` / `tak-agent`
 
 ## Phase 3 — headless agent
 
