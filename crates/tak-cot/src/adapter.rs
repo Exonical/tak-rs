@@ -429,15 +429,15 @@ fn geometry_from(
         vertices.pop();
     }
 
-    if t.is_within(CotType::SHAPE_CIRCLE) {
-        if let Some(e) = event.detail.typed::<EllipseShapeDetail>()? {
-            let g = if (e.major - e.minor).abs() < f64::EPSILON {
-                Geometry::circle(anchor, e.major)?
-            } else {
-                Geometry::ellipse(anchor, e.major, e.minor, e.angle)?
-            };
-            return Ok((g, true));
-        }
+    if t.is_within(CotType::SHAPE_CIRCLE)
+        && let Some(e) = event.detail.typed::<EllipseShapeDetail>()?
+    {
+        let g = if (e.major - e.minor).abs() < f64::EPSILON {
+            Geometry::circle(anchor, e.major)?
+        } else {
+            Geometry::ellipse(anchor, e.major, e.minor, e.angle)?
+        };
+        return Ok((g, true));
     }
     if t.is_within(CotType::SHAPE_RECTANGLE) && vertices.len() == 4 {
         let mut it = vertices.into_iter();
@@ -553,11 +553,8 @@ fn push_vertices(detail: &mut Extensions, vertices: &[GeoPoint], close: bool) {
     for v in vertices {
         detail.push(LinkDetail::vertex(v.lat.degrees(), v.lon.degrees(), None).to_node());
     }
-    if close {
-        if let Some(first) = vertices.first() {
-            detail
-                .push(LinkDetail::vertex(first.lat.degrees(), first.lon.degrees(), None).to_node());
-        }
+    if close && let Some(first) = vertices.first() {
+        detail.push(LinkDetail::vertex(first.lat.degrees(), first.lon.degrees(), None).to_node());
     }
 }
 
@@ -605,21 +602,20 @@ pub fn to_chat(event: &CotEvent) -> Result<ChatMessage, CotError> {
     let mut recipients: Vec<TakUid> = Vec::new();
     for g in &chat.groups {
         for uid in g.uids.iter().skip(1) {
-            if uid != Conversation::ALL_CHAT_ROOMS {
-                if let Ok(u) = TakUid::new(uid.as_str()) {
-                    if !recipients.contains(&u) {
-                        recipients.push(u);
-                    }
-                }
+            if uid != Conversation::ALL_CHAT_ROOMS
+                && let Ok(u) = TakUid::new(uid.as_str())
+                && !recipients.contains(&u)
+            {
+                recipients.push(u);
             }
         }
     }
     if let Some(m) = &marti {
         for d in &m.dests {
-            if let Some(u) = d.uid.as_deref().and_then(|u| TakUid::new(u).ok()) {
-                if !recipients.contains(&u) {
-                    recipients.push(u);
-                }
+            if let Some(u) = d.uid.as_deref().and_then(|u| TakUid::new(u).ok())
+                && !recipients.contains(&u)
+            {
+                recipients.push(u);
             }
         }
     }
