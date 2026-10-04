@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<event version="2.0" uid="S-1-5-21-1234567890-1234567890-1234567890-1001" type="a-f-G-E-V-C" how="h-e" time="2024-05-01T12:00:01.00Z" start="2024-05-01T12:00:01.00Z" stale="2024-05-01T12:10:01.00Z">
+  <point lat="51.5007292" lon="-0.1246254" hae="9999999" ce="9999999" le="9999999" />
+  <detail>
+    <takv version="5.1.0.231" platform="WinTAK-CIV" os="Microsoft Windows 10 Pro" device="DESKTOP-ABC123" />
+    <contact callsign="BRAVO-OPS" endpoint="192.168.1.50:4242:tcp" phone="+442071234567" emailAddress="bravo@example.org" xmppUsername="bravo" />
+    <uid Droid="BRAVO-OPS" />
+    <__group name="Dark Blue" role="HQ" />
+    <status battery="100" />
+    <track speed="0" course="0" />
+    <precisionlocation altsrc="???" geopointsrc="USER" />
+  </detail>
+</event>

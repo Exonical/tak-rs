@@ -21,6 +21,12 @@ impl Argb {
     }
 
     /// Interpret a Java-style signed 32-bit ARGB value.
+    /// From the unsigned packed representation.
+    pub const fn from_u32(value: u32) -> Self {
+        Self(value)
+    }
+
+    /// From a Java-style signed packed `int` as written in CoT.
     pub const fn from_i32(value: i32) -> Self {
         Self(value as u32)
     }

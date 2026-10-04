@@ -1,0 +1,26 @@
+[package]
+name = "tak-cot-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+tak-core = { path = "../../tak-core" }
+tak-cot = { path = ".." }
+
+[[bin]]
+name = "parse_cot"
+path = "fuzz_targets/parse_cot.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
