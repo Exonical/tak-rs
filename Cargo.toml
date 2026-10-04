@@ -4,6 +4,7 @@ members = [
     "crates/tak-core",
     "crates/tak-cot",
     "crates/tak-network",
+    "crates/tak-proto",
     "apps/tak-cli",
 ]
 # Fuzz targets are built separately with `cargo fuzz` (see CONTRIBUTING.md).
@@ -32,6 +33,7 @@ bytes = "1.10"
 # Serialization / wire formats
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+prost = "0.14"
 quick-xml = "0.42"
 
 # Domain primitives

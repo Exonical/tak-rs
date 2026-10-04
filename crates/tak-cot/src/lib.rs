@@ -36,5 +36,7 @@ pub mod write;
 
 pub use error::CotError;
 pub use event::{COT_VERSION, CotEvent, CotPoint, UNKNOWN_SENTINEL};
-pub use parse::{ParseLimits, parse, parse_with_limits};
-pub use write::{WriteOptions, to_xml, to_xml_with};
+pub use parse::{
+    ParseLimits, parse, parse_detail_fragment, parse_detail_fragment_with_limits, parse_with_limits,
+};
+pub use write::{WriteOptions, node_to_xml, nodes_to_xml, to_xml, to_xml_with};
